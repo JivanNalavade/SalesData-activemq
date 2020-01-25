@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="13789287-b4ec-4e72-aa3d-c2486ad4bda0" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<jms:config name="JMS_Config" doc:name="JMS Config" doc:id="67a1d31c-1a37-4736-b94a-9d7ad3d18432" >
+		<jms:active-mq-connection username="${secure::activeMq.username}" password="${secure::activeMq.password}" >
+			<jms:factory-configuration brokerUrl="tcp://localhost:61616" />
+		</jms:active-mq-connection>
+	</jms:config>
+	<file:config name="File_Config" doc:name="File Config" doc:id="b072f5dc-eb6c-4fa9-8efc-2259469c4f4b" />
+	<flow name="active-mq-demoFlow" doc:id="fd217165-f513-48ef-9bc8-65251204d4b2" >
+		<http:listener doc:name="Listener" doc:id="87b4a1e9-70b5-44d2-b083-8de240b50b26" config-ref="HTTP_Listener_config" path="/publish"/>
+		<file:read doc:id="a0da6998-16cc-4a4d-9c6d-962cefb695ef" config-ref="File_Config" path="D:\asses -2\SalesJan2009.csv" doc:name="Read Sales data from CSV file"/>
+		<try doc:name="Try" doc:id="5d4c13ce-9e39-4271-a847-2b11124c7d9a" >
+			<jms:publish doc:name="Publish it to the SalesData queue" doc:id="23d23db5-41cb-4d2b-87ea-d9daaf69cc04" config-ref="JMS_Config" destination="${activemq.queuename}" />
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="b56de95c-c26e-4898-ad8b-4b6f7ef48cf9" >
+					<ee:transform doc:name="Transform Message" doc:id="a41e4975-a3dd-424d-8061-8df99604d973" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	isSucess: false,
+	Message: "Unable to publish data to queue"
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<ee:transform doc:name="Transform Message" doc:id="92a9b7f2-920f-4a60-893b-ffd5e8a766f7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	isSucess: true,
+	Message: "Data published to queue successfully"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="active-mq-consume-demoFlow" doc:id="23105ae7-4368-4cad-b645-048e28c6267e" >
+		<http:listener doc:name="Listener" doc:id="148bdd3b-9c13-44c5-8005-efb4facf1014" config-ref="HTTP_Listener_config" path="/consume"/>
+		<jms:consume doc:name="Consume the Data from Salesdata queue" doc:id="12dce577-5db6-476f-8e7d-c628f654e166" config-ref="JMS_Config" destination="${activemq.queuename}" />
+		<ee:transform doc:name="Filter the data as per required transformation" doc:id="3c067afe-929f-429f-9311-71e44bb96540" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+using(finalData=payload filter ((item, index) -> item.Price == "1200" and (item.Country == "United Kingdom" or item.Country == "Canada" or item.Country == "Spain") and item.Payment_Type == "Mastercard"))
+finalData map ((item, index) -> {
+    Transaction_date: item.Transaction_date,
+    Product: item.Product,
+    Price : item.Price 
+})]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Log the filtered data" doc:id="793774d2-edbd-470e-8bba-3932473e3eaa" message="Filtered data ::#[payload]"/>
+	</flow>
+</mule>
