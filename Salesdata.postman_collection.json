@@ -1,0 +1,33 @@
+{
+	"variables": [],
+	"info": {
+		"name": "Salesdata",
+		"_postman_id": "9c19632d-8e0d-a9ad-b45b-2b39ce765803",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Consume data",
+			"request": {
+				"url": "localhost:8081/consume",
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Publish salesdata",
+			"request": {
+				"url": "localhost:8081/publish",
+				"method": "GET",
+				"header": [],
+				"body": {},
+				"description": ""
+			},
+			"response": []
+		}
+	]
+}
